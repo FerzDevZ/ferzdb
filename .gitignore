@@ -1,0 +1,24 @@
+# Rust
+/target/
+Cargo.lock  # Keep for application
+
+# FerzDB specific
+*.fdb
+*.wal
+*.lock
+.ferzdb/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*.tmp
