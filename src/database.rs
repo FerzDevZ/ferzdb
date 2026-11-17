@@ -211,8 +211,12 @@ impl Database {
         Ok(result_set)
     }
 
-    /// Flush all caches to disk
+    /// Flush all caches to disk.
+    ///
+    /// This was a stub, so `sync()` reported success while every dirty page —
+    /// including the catalog — stayed in memory and died with the process.
     pub fn sync(&self) -> Result<()> {
+        self.bpm.flush_all()?;
         Ok(())
     }
 }

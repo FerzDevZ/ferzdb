@@ -117,6 +117,29 @@ impl BufferPoolManager {
         }
     }
 
+    /// Write every dirty frame back to the file and clear the dirty bit.
+    ///
+    /// Without this the pool only reached disk through victim eviction, so a
+    /// process that closed cleanly lost every page still pinned in memory —
+    /// the catalog included, which made a reopened database forget its tables.
+    pub fn flush_all(&self) -> Result<()> {
+        let page_table = self.page_table.lock().map_err(|_| FerzError::Internal("Lock poisoned".to_string()))?;
+        let mut frames = self.frames.lock().map_err(|_| FerzError::Internal("Lock poisoned".to_string()))?;
+
+        for frame in frames.iter_mut() {
+            if !frame.is_dirty {
+                continue;
+            }
+            let page = frame.page.lock().unwrap();
+            self.file_handler.write_page(page.id, &page.data)?;
+            drop(page);
+            frame.is_dirty = false;
+        }
+
+        drop(page_table);
+        Ok(())
+    }
+
     /// Allocate a new page in the storage engine and fetch it
     pub fn allocate_page(&self) -> Result<Arc<Mutex<Page>>> {
         let page_id = self.file_handler.allocate_page()?;
